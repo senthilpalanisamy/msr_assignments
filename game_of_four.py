@@ -1,11 +1,12 @@
 import numpy as np
 import random
+from game_constants import *
+from utility_functions import *
 
-EMPTY_BOX = 0
 
 class game_of_four:
-  rows = 6
-  columns = 7
+  rows = ROWS 
+  columns = COLUMNS
   board_state = np.zeros((rows,columns), dtype=np.uint8)
   player_to_character = ['X','1','2']
   current_player = 0
@@ -38,6 +39,7 @@ class game_of_four:
     
 
   def record_move_and_update_board(self):
+
     print '\nPlayer %d enter your move' % self.current_player
     while True:
 
@@ -51,14 +53,17 @@ class game_of_four:
       if col_index > self.columns or col_index < 0:
         print '\nInvalid input! Please a valid column number'
         continue
+
+      is_the_move_valid, next_state = calculate_next_state(self.board_state,
+                                                           col_index,
+                                                           self.current_player) 
       
-      sliced_column = list(reversed(self.board_state[:, col_index]))
-      if 0 in sliced_column:
-        row_index = self.rows - sliced_column.index(0) - 1
-        self.board_state[row_index][col_index] = self.current_player
+      if is_the_move_valid:
+        self.board_state = next_state
         break
       else:
         print 'Invalid input! Please enter a box that\'s unoccupied'
+
     if self.current_player == 1:
       self.current_player = 2
     else:
@@ -73,7 +78,6 @@ class game_of_four:
       else:
         return True
 
-    # check_if_the_sequence_is_valid([[1,2],[-1,-3]])
 
     for row_index in range(self.rows):
       for col_index in range(self.columns):
