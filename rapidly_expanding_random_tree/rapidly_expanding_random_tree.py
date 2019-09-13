@@ -1,10 +1,13 @@
 import numpy as np
-np.random.seed(5000)
 
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib import colors as mcolors
+
+from algo_constants import *
+
+np.random.seed(RANDOM_SEED)
 
 
 
@@ -18,7 +21,7 @@ class rrt_node:
     self.all_children.append(child)
 
 
-def generate_random_vector(dimensions=2, max_values=[100,100]):
+def generate_random_vector(dimensions=2, max_values=[X_END, Y_END]):
   random_vector = np.random.uniform(size=dimensions) * np.array(max_values)
   return random_vector
 
@@ -34,7 +37,7 @@ def find_the_nearest_node(nodes_list, target_node):
       nearest_node = node
   return nearest_node
 
-def plot_rrt_tree(nodes_list, max_values=[100,100]):
+def plot_rrt_tree(nodes_list, max_values=[X_END, Y_END]):
   'Writren by referrring Matplot lib documentation'
 
   all_lines = []
@@ -53,8 +56,8 @@ def plot_rrt_tree(nodes_list, max_values=[100,100]):
   plt.show()
   
 
-def build_expanding_rrt(qinit=[50.0,50.0], vertex_count=10000, incremental_distance=1,
-                        planning_domain=2):
+def build_expanding_rrt(qinit=[50.0,50.0], vertex_count=1000, incremental_distance=1,
+                        planning_domain=NUM_DIMENSIONS):
   first_node = rrt_node(np.array(qinit))
   first_node.parent = None
   all_nodes = [first_node]
