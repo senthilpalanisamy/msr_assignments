@@ -79,7 +79,7 @@ def plot_rrt_tree(nodes_list, start_to_goal_path, canvas_2d,
 
 def find_the_nearest_node_to_goal(qout, all_nodes, canvas_2d):
 
-  max_termination_distance = 1.0
+  max_termination_distance = 60.0
   new_node = rrt_node(qout) 
   nearest_node, distance = find_the_nearest_node(all_nodes, new_node)
   if(distance < max_termination_distance):
@@ -111,18 +111,34 @@ def find_path_between_two_nodes(start_node, end_node):
   
      
 
-def build_expanding_rrt(qinit=[80.0,80.0], qout=[10.0, 10.0], max_vertex_count=5000, 
+def build_expanding_rrt(qinit=[], qout=[], max_vertex_count=5000, 
                         incremental_distance=1, planning_domain=NUM_DIMENSIONS):
 
-  qinit=[80.0,80.0]
-  first_node = rrt_node(np.array(qinit))
-  first_node.parent = None
-  all_nodes = [first_node]
+  #qinit=[80.0,80.0]  
+  #qout=[10.0, 10.0]
   start_to_goal_path = []
 
   canvas_2d = canvas_generator_2d_circular_obstacles(no_of_circles=10, 
                                                        max_radii=10, min_radii=2)
   canvas_2d.genrate_canvas()
+
+  if(not qinit):
+    qinit = generate_random_vector(planning_domain)
+    while(not canvas_2d.is_this_point_collision_free(np.array(qinit))):
+      qinit = generate_random_vector(planning_domain)
+
+  if(not qout):
+    qout = generate_random_vector(planning_domain)
+    while(not canvas_2d.is_this_point_collision_free(np.array(qout))):
+      qout = generate_random_vector(planning_domain)
+   
+
+
+
+
+  first_node = rrt_node(np.array(qinit))
+  first_node.parent = None
+  all_nodes = [first_node]
 
 
   for i in range(max_vertex_count):

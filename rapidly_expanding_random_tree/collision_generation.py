@@ -20,13 +20,19 @@ class canvas_generator_2d_circular_obstacles:
     self.min_radii = min_radii
     self.all_circles = []
 
+  def is_this_point_collision_free(self, point):
+    for each_circle in self.all_circles:
+      if( np.linalg.norm(each_circle.center - point) <= each_circle.radius): 
+        return False
+    return True
+
   def genrate_canvas(self):
     
-      for circle_index in range(self.no_of_circles):
-        center = np.random.uniform(size=self.dimensions) * np.array([X_END, Y_END])
-        radius = self.min_radii + np.random.uniform(size=1) * (self.max_radii - self.min_radii)
-        new_circle = circle(center, radius)
-        self.all_circles.append(new_circle)
+    for circle_index in range(self.no_of_circles):
+      center = np.random.uniform(size=self.dimensions) * np.array([X_END, Y_END])
+      radius = self.min_radii + np.random.uniform(size=1) * (self.max_radii - self.min_radii)
+      new_circle = circle(center, radius)
+      self.all_circles.append(new_circle)
 
   def does_line_intersect_circle(self, line):
     '''
