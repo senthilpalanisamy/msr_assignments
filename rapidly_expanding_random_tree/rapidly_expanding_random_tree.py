@@ -35,18 +35,25 @@ def find_the_nearest_node(nodes_list, target_node):
     if distance < best_distance:
       best_distance = distance
       nearest_node = node
-  return nearest_node
+  return nearest_node, best_distance
 
-def plot_rrt_tree(nodes_list, canvas_2d, max_values=[X_END, Y_END]):
-  'Writren by referrring Matplot lib documentation'
+def get_lines_from_nodes(nodes_list):
 
-  all_lines = []
+  lines = []
   for node in nodes_list:
     for child in node.all_children:
-      all_lines.append([node.position, child.position])
+      lines.append([node.position, child.position])
+  return np.array(lines)
 
-  lines = np.array(all_lines)
-  # print 'total_lines', lines.shape
+def plot_rrt_tree(nodes_list, start_to_goal_path, canvas_2d,
+                  max_values=[X_END, Y_END]):
+  'Writren by referrring Matplot lib documentation'
+
+
+  non_path_nodes = [node for node in nodes_list if node not in start_to_goal_path]
+  path_lines = get_lines_from_nodes(start_to_goal_path)
+  non_path_lines = get_lines_from_nodes(non_path_nodes)
+
   fig, ax = plt.subplots()
   ax.set_xlim(0, max_values[0])
   ax.set_ylim(0, max_values[1])
@@ -58,33 +65,73 @@ def plot_rrt_tree(nodes_list, canvas_2d, max_values=[X_END, Y_END]):
   coll = matplotlib.collections.PatchCollection(patches, facecolors='black')
 
 
-  line_segments = LineCollection(lines, linewidths=(0.5, 1, 1.5, 2), linestyle='solid')
-  #matplotlib.patches.circle()
+  non_path_colors = [(1.0, 0, 0, 0) for i in range(len(non_path_lines))]
+
+  non_path_segments = LineCollection(non_path_lines, linewidths=(0.5, 1, 1.5, 2), linestyle='solid')
+  path_segments = LineCollection(path_lines, linewidths=(0.5, 1, 1.5, 2), colors='red', linestyle='solid')
+
   ax.add_collection(coll)
-  ax.add_collection(line_segments)
-
-
+  ax.add_collection(path_segments)
+  ax.add_collection(non_path_segments)
   ax.set_title('rapidly expanding random tree')
 
   plt.show()
-  
 
-def build_expanding_rrt(qinit=[80.0,80.0], vertex_count=5000, incremental_distance=1,
-                        planning_domain=NUM_DIMENSIONS):
+def find_the_nearest_node_to_goal(qout, all_nodes, canvas_2d):
+
+  max_termination_distance = 1.0
+  new_node = rrt_node(qout) 
+  nearest_node, distance = find_the_nearest_node(all_nodes, new_node)
+  if(distance < max_termination_distance):
+    line = np.array([nearest_node.position, new_node.position])
+    is_intersect = canvas_2d.does_line_intersect_circle(line)
+    if(is_intersect):
+      return False, all_nodes
+    else:
+      new_node.set_parent(nearest_node)
+      nearest_node.add_child(new_node)
+      all_nodes.append(new_node)
+      return True, all_nodes
+  else:
+    return False, all_nodes
+
+def find_path_between_two_nodes(start_node, end_node):
+   
+  path = []
+  current_node = end_node
+
+  while(current_node !=  start_node):
+    path.append(current_node)
+    current_node = current_node.parent
+  path.append(current_node)
+
+  return path
+
+  
+  
+     
+
+def build_expanding_rrt(qinit=[80.0,80.0], qout=[10.0, 10.0], max_vertex_count=5000, 
+                        incremental_distance=1, planning_domain=NUM_DIMENSIONS):
+
+  qinit=[80.0,80.0]
   first_node = rrt_node(np.array(qinit))
   first_node.parent = None
   all_nodes = [first_node]
+  start_to_goal_path = []
 
   canvas_2d = canvas_generator_2d_circular_obstacles(no_of_circles=10, 
                                                        max_radii=10, min_radii=2)
   canvas_2d.genrate_canvas()
 
 
-  for i in range(vertex_count):
+  for i in range(max_vertex_count):
     random_position = generate_random_vector(planning_domain)
     new_node = rrt_node(random_position) 
-    nearest_node = find_the_nearest_node(all_nodes, new_node)
-    unit_distance_position = (new_node.position - nearest_node.position) / np.linalg.norm(new_node.position - nearest_node.position) * incremental_distance + nearest_node.position
+    nearest_node, _ = find_the_nearest_node(all_nodes, new_node)
+    unit_distance_position = (new_node.position - nearest_node.position) / \
+                             np.linalg.norm(new_node.position - nearest_node.position) *\
+                             incremental_distance + nearest_node.position
     new_node.position = unit_distance_position
     line = np.array([nearest_node.position, new_node.position])
     is_intersect = canvas_2d.does_line_intersect_circle(line)
@@ -95,8 +142,17 @@ def build_expanding_rrt(qinit=[80.0,80.0], vertex_count=5000, incremental_distan
       new_node.set_parent(nearest_node)
       nearest_node.add_child(new_node)
       all_nodes.append(new_node)
+    is_goal_reached, all_nodes = find_the_nearest_node_to_goal(qout, all_nodes, 
+                                                                     canvas_2d)
 
-  plot_rrt_tree(all_nodes, canvas_2d)
+    if(is_goal_reached):
+      start_node = first_node
+      end_node = filter(lambda node:np.array_equal(node.position, np.array(qout)), 
+                                                   all_nodes)[0]
+      start_to_goal_path = find_path_between_two_nodes(start_node, end_node)
+      break
+
+  plot_rrt_tree(all_nodes, start_to_goal_path, canvas_2d)
   
 
   
