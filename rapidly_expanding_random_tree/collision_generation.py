@@ -1,6 +1,5 @@
 from algo_constants import *
 import numpy as np
-np.random.seed(RANDOM_SEED)
 
 class circle:
   def __init__(self, center, radius):
@@ -34,7 +33,7 @@ class canvas_generator_2d_circular_obstacles:
       new_circle = circle(center, radius)
       self.all_circles.append(new_circle)
 
-  def does_line_intersect_circle(self, line):
+  def does_line_intersect_obstacle(self, line):
     '''
      u value is the scalar mulitple of P2-P1 at which the shortest distance
      between the point and line lies
@@ -68,17 +67,12 @@ class canvas_generator_2d_circular_obstacles:
       
 
 if __name__ =='__main__':
+
+  np.random.seed(RANDOM_SEED)
   canvas_2d = canvas_generator_2d_circular_obstacles(no_of_circles=10, 
                                                      max_radii=10, min_radii=2)
   canvas_2d.genrate_canvas()
   line = np.array([[50,50], [60,60]])
-  canvas_2d.does_line_intersect_circle(line)
+  canvas_2d.does_line_intersect_obstacle(line)
   print canvas_2d 
-
-    
-
-
-
-  
-
-  
+ 
