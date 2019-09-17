@@ -1,7 +1,6 @@
 import time
 
-uyxcvnm,;;llkjhgnb n,?
-'kigt'import serial
+import serial
 
 class servo_motor_control:
 
@@ -47,15 +46,13 @@ class servo_motor_control:
 
   def send_angle_sequence(self, commands):
 
-    angles = [0, 30, 60, 90, 120, 150, 180, 150, 120, 90, 60, 30, 0]
     for index, uart_command in enumerate(commands):
-
       self.send_command_to_servo(uart_command)
       print 'command sent', angles[index]
       time.sleep(3)
 
   def close_connection(self):
-  #  self.servo_port.close()
+    self.servo_port.close()
 
 if __name__=='__main__':
     angle = 30
@@ -66,10 +63,10 @@ if __name__=='__main__':
     command_sequence_motor2 = servo_control.generate_uart_commands_for_sequence(angles, 
                                                                    device_number='\x01')
 
-    command = servo_control.generate_uart_command_for_angle(angle)
-    command = servo_control.generate_uart_command_for_angle(angle, device_number='\x00')
+    #command = servo_control.generate_uart_command_for_angle(angle)
+    #command = servo_control.generate_uart_command_for_angle(angle, device_number='\x00')
     # print command
-    #servo_control.start_port_connection()
+    servo_control.start_port_connection()
     servo_control.send_angle_sequence(command_sequence_motor1)
     servo_control.send_angle_sequence(command_sequence_motor2)
     servo_control.close_connection()
