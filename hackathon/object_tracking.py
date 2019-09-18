@@ -39,7 +39,7 @@ def detect_object(image):
     #Segmenting the cloth out of the frame using bitwise and with the inverted mask
     res1 = cv2.bitwise_and(image,image,mask=mask2)
 
-    _, cnts, hierarchy = cv2.findContours(mask1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts, hierarchy = cv2.findContours(mask1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     selected_contours = []
     
@@ -53,13 +53,15 @@ def detect_object(image):
            solidity > 0.8:
            selected_contours.append(contour)
 
-    # largest_contour = max()
-    cv2.drawContours(image, selected_contours, -1, (0, 255, 0), 3) 
-    # cv2.imshow('image', image)
-    # cv2.waitKey(0)
 
-    return image
+    if selected_contours:
+      largest_contour = max(selected_contours, key = cv2.contourArea)[0]
+      if len(largest_contour) > 0:
+        bounding_box = cv2.boundingRect(largest_contour) 
+        cv2.drawContours(image, [largest_contour], -1, (0, 255, 0), 3) 
+        return image, bounding_box
 
+    return None, None
 
 
 
@@ -92,7 +94,7 @@ def process_video(file_name):
       ret, frame = cap.read()
   
       # Our operations on the frame come here
-      image_with_detection = detect_object(frame)
+      image_with_detection, _ = detect_object(frame)
   
       # Display the resulting frame
       cv2.imshow('frame',image_with_detection)
@@ -104,14 +106,45 @@ def process_video(file_name):
   cap.release()
   cv2.destroyAllWindows()
 
-# def track_using_tracke():
-#   tracker = cv2.Tracker_create('KCF')
-#   bbox = 
-    
+def track_using_tracker():
+  tracker = cv2.TrackerCSRT_create()
+  cap = cv2.VideoCapture('/home/senthil/work/msr_assignments/data/videos/blue_square.avi')
+
+  is_detection_initialised = False
+
+  while(cap.isOpened()):
+    ret, frame = cap.read()
+
+    if(not is_detection_initialised):
+      op_image, bbox = detect_object(frame)
+
+      if(bbox is not None):
+
+        print 'detecting object'
+        tracker.init(frame, bbox)
+        is_detection_initialised = True
+    else:
+      mask_image, box = tracker.update(frame)
+      print 'tracking'
+      x, y, w, h = [int(num) for num in box]
+      cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+      op_image = frame
+
+    if op_image is None:
+      op_image = frame
+
+    cv2.imshow('frame', op_image)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+  cap.release()
+  cv2.destroyAllWindows()
+
 
 
 if __name__=='__main__':
   file_name = '/home/senthil/work/msr_assignments/data/frames/blue_square_images/blue_square.avi'
-  process_video(file_name)
+  # process_video(file_name)
+  track_using_tracker()
   # image = cv2.imread('/home/senthil/work/msr_assignments/data/frames/blue_square_images/input_image0218.jpg')
   # detect_object(image)
