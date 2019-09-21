@@ -10,12 +10,12 @@ def detect_object(image):
 
 
     blurred_image = cv2.GaussianBlur(image, (7, 7), 0)
-    saturation_value = 120
-    value = 100
-    blue_max = 150
-    blue_min = 90
+    saturation_value = 90
+    value = 50
+    blue_max = 160
+    blue_min = 80
     expected_contour_area = 16954
-    safety_margin = 1.5
+    safety_margin = 10.0
 
     # converting from BGR to HSV color space
     hsv = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
@@ -39,7 +39,7 @@ def detect_object(image):
     #Segmenting the cloth out of the frame using bitwise and with the inverted mask
     res1 = cv2.bitwise_and(image,image,mask=mask2)
 
-    _, cnts, hierarchy = cv2.findContours(mask1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts, hierarchy = cv2.findContours(mask1, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     selected_contours = []
     
@@ -53,12 +53,19 @@ def detect_object(image):
            solidity > 0.8:
            selected_contours.append(contour)
 
-    # largest_contour = max()
-    cv2.drawContours(image, selected_contours, -1, (0, 255, 0), 3) 
-    # cv2.imshow('image', image)
-    # cv2.waitKey(0)
+    if selected_contours:
+      largest_contour = sorted(selected_contours, key = lambda x:cv2.contourArea(x), reverse=True)[0]
+      M = cv2.moments(largest_contour)
+      cX = int(M["m10"] / M["m00"])
+      cY = int(M["m01"] / M["m00"])
+      centroid = [cX, cY]
+      cv2.drawContours(image, selected_contours, -1, (0, 255, 0), 3) 
+      # cv2.imshow('image', image)
+      # cv2.waitKey(0)
 
-    return image
+      return image, centroid
+    else:
+      return None, None
 
 
 

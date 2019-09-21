@@ -1,9 +1,15 @@
 import time
 
 import serial
+import random
 
-horizontal_angle = 11
-vertical_angle = 7.6
+# horizontal_angle = 11
+# vertical_angle = 7.6
+
+# horizontal_angle = 11
+# vertical_angle = 7.6
+horizontal_angle = 6
+vertical_angle = 3.8 
 
 class servo_details:
 
@@ -16,8 +22,8 @@ class servo_details:
 
 class servo_motor_control:
 
-  PULSE_START = 992
-  PULSE_END = 2000
+  PULSE_START = 480
+  PULSE_END = 2400
   ANGLE_START = 0
   ANGLE_END = 180
 
@@ -27,9 +33,9 @@ class servo_motor_control:
     self.servo_port = serial.Serial(self.port_name, baudrate=9600)
  
   def initialise_motor_positions(self, motors):
-    command = self.generate_uart_command_for_angle(90, motors[0].device_name)
+    command = self.generate_uart_command_for_angle( 120, motors[0].device_name)
     self.send_command_to_servo(command)
-    command = self.generate_uart_command_for_angle(90, motors[1].device_name)
+    command = self.generate_uart_command_for_angle( 120, motors[1].device_name)
     self.send_command_to_servo(command)
 
 
@@ -74,20 +80,44 @@ class servo_motor_control:
     current_position = current_position / (self.PULSE_END - self.PULSE_START) * 180
 
     print 'current_x_position', current_position, 'pulse_value', self.get_servo_position(motor1)
-    if x_error < 0: 
-      angle_to_move_x = current_position - delta_theta1
-    else:
-      angle_to_move_x = current_position + delta_theta1
+    print 'delta_thera_x', delta_theta1, 'delta_theta_y', delta_theta2
 
-    current_position = self.get_servo_position(motor1) 
+    if 80 < current_position < 100:
+      print 'current x position near 90'
+      angle_to_move_x = random.choice([100, 80])
+    elif current_position < 90:
+      if x_error < 0: 
+        angle_to_move_x = current_position - delta_theta1
+      else:
+        angle_to_move_x = current_position + delta_theta1
+    else:
+      if x_error < 0: 
+        angle_to_move_x = current_position + delta_theta1
+      else:
+        angle_to_move_x = current_position - delta_theta1
+
+    current_position = self.get_servo_position(motor2) 
     current_position = current_position / 4.0 - self.PULSE_START
     current_position = current_position / (self.PULSE_END - self.PULSE_START) * 180
  
     print 'current_y_position', current_position, 'pulse_value', self.get_servo_position(motor2)
-    if y_error > 0:
-      angle_to_move_y = current_position - delta_theta2
+    print 'delta_angle', delta_theta2
+
+    if 80 < current_position < 100:
+      print 'cuurent_y position near 90'
+      angle_to_move_y = random.choice([100, 80])
+    elif current_position < 90:
+      if y_error > 0:
+        angle_to_move_y = current_position + delta_theta2
+      else:
+        angle_to_move_y = current_position - delta_theta2
     else:
-      angle_to_move_y = current_position + delta_theta2
+      print 'angle > 90'
+      if y_error > 0:
+        print 'point above centroid'
+        angle_to_move_y = current_position - delta_theta2
+      else:
+        angle_to_move_y = current_position + delta_theta2
     command = self.generate_uart_command_for_angle(angle_to_move_x, motor1.device_name)
     self.send_command_to_servo(command)
     command = self.generate_uart_command_for_angle(angle_to_move_y, motor2.device_name)
@@ -129,25 +159,26 @@ class servo_motor_control:
     self.servo_port.close()
 
 if __name__=='__main__':
-    angle = 180
+    angle = 10
     angles = [0, 30, 60, 90, 120, 150, 180, 150, 120, 90, 60, 30, 0]
     servo_motor1 = servo_details(device_name = '\x00')
     servo_motor2 = servo_details(device_name = '\x01')
     servo_control = servo_motor_control()
-    servo_control.initialise_motor_positions([servo_motor1, servo_motor2])
-    servo_control.adjust_motor_angles([100, 300], [320, 240], [servo_motor1, servo_motor2])
+    #servo_control.initialise_motor_positions([servo_motor1, servo_motor2])
+    #servo_control.adjust_motor_angles([100, 300], [320, 240], [servo_motor1, servo_motor2])
 
     # command_sequence_motor1 = servo_control.generate_uart_commands_for_sequence(angles, 
     #                                                                device_number='\x00')
     # command_sequence_motor2 = servo_control.generate_uart_commands_for_sequence(angles, 
     #                                                               device_number='\x01')
 
-    #command = servo_control.generate_uart_command_for_angle(angle)
-
-    print servo_control.get_servo_position(servo_motor1)
-    command = servo_control.generate_uart_command_for_angle(angle, device_number=servo_motor1.device_name)
+    command = servo_control.generate_uart_command_for_angle(angle, servo_motor2.device_name)
     servo_control.send_command_to_servo(command)
-    print servo_control.get_servo_position(servo_motor1)
+
+    # print servo_control.get_servo_position(servo_motor1)
+    # command = servo_control.generate_uart_command_for_angle(angle, device_number=servo_motor1.device_name)
+    # servo_control.send_command_to_servo(command)
+    # print servo_control.get_servo_position(servo_motor1)
     # print command
     # servo_control.start_port_connection()
     # servo_control.send_angle_sequence(command_sequence_motor1)
