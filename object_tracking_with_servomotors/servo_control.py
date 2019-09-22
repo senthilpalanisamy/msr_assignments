@@ -6,18 +6,17 @@ import random
 # horizontal_angle = 11
 # vertical_angle = 7.6
 
-# horizontal_angle = 11
-# vertical_angle = 7.6
-horizontal_angle = 6
-vertical_angle = 3.8 
+# horizontal_angle = 6
+# vertical_angle = 3.8 
+
+horizontal_angle = 3
+vertical_angle = 1.9 
 
 class servo_details:
 
     def __init__(self, device_name):
       self.device_name = device_name
       self.current_position = 0
-
-
 
 
 class servo_motor_control:
@@ -58,74 +57,84 @@ class servo_motor_control:
     angle_range = self.ANGLE_END - self.ANGLE_START
     quarters_per_microsecond = 4
     pulse_per_angle = float(pulse_range) / angle_range
-    pulse_value = int(self.PULSE_START + angle * pulse_per_angle) * quarters_per_microsecond
+    pulse_value = int(self.PULSE_START + angle * pulse_per_angle) * \
+                                                      quarters_per_microsecond
 
-    # print 'pulse_value', pulse_value
-    command_to_servo = self.generate_uart_command_for_pulse(pulse_value, device_number)
+    command_to_servo = self.generate_uart_command_for_pulse(pulse_value, 
+                                                            device_number)
     return command_to_servo
+
+  def convert_pulse_to_angle(self, pulse_value):
+
+    pulse_value = pulse_value / 4.0 - self.PULSE_START
+    angle = pulse_value / (self.PULSE_END - self.PULSE_START) * 180
+    return angle
 
 
   def adjust_motor_angles(self, error_point, actual_location, motors):
     error_limit = 10 
     x,y = error_point
     xc, yc = actual_location
-    x_error = xc - x
-    y_error = yc - y
+    #x_error = xc - x
+    #y_error = yc - y
     motor1, motor2 = motors
-    delta_theta1 = abs(x_error) / 640.0 * horizontal_angle 
-    delta_theta2 = abs(y_error) / 480.0 * vertical_angle 
+    delta_theta_pan = abs(xc - x) / 640.0 * horizontal_angle 
+    delta_theta_tilt = abs(yc - y) / 480.0 * vertical_angle 
 
-    current_position = self.get_servo_position(motor1) 
-    current_position = current_position / 4.0 - self.PULSE_START
-    current_position = current_position / (self.PULSE_END - self.PULSE_START) * 180
+    pan_angle = self.convert_pulse_to_angle(self.get_servo_position(motor1))
 
-    print 'current_x_position', current_position, 'pulse_value', self.get_servo_position(motor1)
-    print 'delta_thera_x', delta_theta1, 'delta_theta_y', delta_theta2
+    print 'current_x_position', pan_angle, 'pulse_value', 
+    print self.get_servo_position(motor1)
+    print 'delta_thera_x', delta_theta_pan, 'delta_theta_y', delta_theta_tilt
 
-    if 80 < current_position < 100:
-      print 'current x position near 90'
-      angle_to_move_x = random.choice([100, 80])
-    elif current_position < 90:
-      if x_error < 0: 
-        angle_to_move_x = current_position - delta_theta1
-      else:
-        angle_to_move_x = current_position + delta_theta1
-    else:
-      if x_error < 0: 
-        angle_to_move_x = current_position + delta_theta1
-      else:
-        angle_to_move_x = current_position - delta_theta1
+    tilt_angle = self.convert_pulse_to_angle(self.get_servo_position(motor2))
 
-    current_position = self.get_servo_position(motor2) 
-    current_position = current_position / 4.0 - self.PULSE_START
-    current_position = current_position / (self.PULSE_END - self.PULSE_START) * 180
  
-    print 'current_y_position', current_position, 'pulse_value', self.get_servo_position(motor2)
-    print 'delta_angle', delta_theta2
+    print 'current_y_position', tilt_angle, 'pulse_value', self.get_servo_position(motor2)
+    print 'delta_angle', delta_theta_tilt
 
-    if 80 < current_position < 100:
-      print 'cuurent_y position near 90'
-      angle_to_move_y = random.choice([100, 80])
-    elif current_position < 90:
-      if y_error > 0:
-        angle_to_move_y = current_position + delta_theta2
+    # if 80 < pan_angle < 100:
+    #   print 'current x position near 90'
+    #   angle_to_move_x = random.choice([100, 80])
+    if(tilt_angle < 90): 
+      if xc > x: 
+        angle_to_move_x = pan_angle + delta_theta_pan
       else:
-        angle_to_move_y = current_position - delta_theta2
+        angle_to_move_x = pan_angle - delta_theta_pan
+
     else:
-      print 'angle > 90'
-      if y_error > 0:
-        print 'point above centroid'
-        angle_to_move_y = current_position - delta_theta2
+      if xc > x: 
+        angle_to_move_x = pan_angle - delta_theta_pan
       else:
-        angle_to_move_y = current_position + delta_theta2
+        angle_to_move_x = pan_angle + delta_theta_pan
+
+    if yc > y:
+      angle_to_move_y = tilt_angle - delta_theta_tilt
+    else:
+      angle_to_move_y = tilt_angle + delta_theta_tilt
+
+
+
+    # if 80 < tilt_angle < 100:
+    #   print 'cuurent_y position near 90'
+    #   angle_to_move_y = random.choice([100, 80])
+    # if tilt_angle < 90:
+    #   if yc > y:
+    #     angle_to_move_y = tilt_angle + delta_theta_tilt
+    #   else:
+    #     angle_to_move_y = tilt_angle - delta_theta_tilt
+    # else:
+    #   print 'angle > 90'
+    #   if yc > y:
+    #     print 'point above centroid'
+    #     angle_to_move_y = tilt_angle - delta_theta_tilt
+    #   else:
+    #     angle_to_move_y = tilt_angle + delta_theta_tilt
     command = self.generate_uart_command_for_angle(angle_to_move_x, motor1.device_name)
     self.send_command_to_servo(command)
     command = self.generate_uart_command_for_angle(angle_to_move_y, motor2.device_name)
     self.send_command_to_servo(command)
     print 'angle to move_x', angle_to_move_x, 'angle_to_move_y', angle_to_move_y
-
-
-    
 
 
 
@@ -147,12 +156,10 @@ class servo_motor_control:
       time.sleep(0.1)
 
   def get_servo_position(self, servo_motor):
-     #device_name = 
      position = self.servo_port.write('\x90'+ servo_motor.device_name)
      motor_position = self.servo_port.read(2)
      pulse_width = (ord(motor_position[1]) << 8) + ord(motor_position[0])
      return pulse_width
-
 
 
   def __del__(self):
