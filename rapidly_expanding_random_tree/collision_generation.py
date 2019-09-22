@@ -191,10 +191,16 @@ class canvas_generator_with_random_obstacles:
       '''
       line_coordinates = self.generate_line_coordinates(line)
       #line_coordinates = [(x-1, y-1) for (x,y) in line_coordinates]
+      buffer_len = 2
+      height, width  = self.binary_map.shape
 
       for (x1, y1) in line_coordinates:
-        if self.binary_map[y1, x1] == 0: 
-          return True
+        if x1 - buffer_len > 0  and x1 + buffer_len+1 < width and y1-buffer_len > 0 and\
+           y1 + buffer_len+1 < height:
+          if 0 in self.binary_map[y1-buffer_len:y1+buffer_len+1, x1-buffer_len:x1+buffer_len+1]: 
+            return True
+        else:
+            return  True
       return False
 
   def get_lines_from_nodes(self, nodes_list):
