@@ -14,6 +14,7 @@ Description of files:-
    1. The servo controller used here is the pololu micro maestro controller
    2. UART signals are communicated using serial library to the maestro 
       controller
+
    Hints:-
    1. Depending on the board you are using and the preferred communication 
    mode, this class should be rewritten
@@ -21,11 +22,14 @@ Description of files:-
       consistent with this class definition, the object_tracking code can be
       used without any modifications
    3. The servo motor adjustment logic in this class is strictly based on the
-      assumption that the intial configuration of the camera is such that
+      assumption that the intial configuration of the camera (the position of 
+      camera when both motors are at 0-0) is such that
       the x-axis of the camera is opposite to the direction in which the pan
       servo moves and the y-axis of the camera points in the same direction 
-      as the pan movement of the camera. You will need to change this logic
+      as the titl movement of the camera. You will need to change this logic
       if this assumption is violated.
+
+
 2. Object_tracking.py
    1. This file contains code for detecting a simple blue cube and tracking 
       it using CSRT tracker.
