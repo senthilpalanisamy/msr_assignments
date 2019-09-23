@@ -1,6 +1,8 @@
 This file contains code for tracking an object using camera mounted on 
 servo motor
 
+check out video demo @ https://www.youtube.com/watch?v=3hftMyb5vug&feature=youtu.be
+
 Instructions to run:-
 1. Install requirements.txt (This file may include a few extra libraries 
    that are used in other assignments)
